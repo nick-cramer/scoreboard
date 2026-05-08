@@ -11,8 +11,31 @@ const atBatViewEl = document.getElementById("atbat-view");
 const scoreModeButtonEl = document.getElementById("score-mode-button");
 const atBatModeButtonEl = document.getElementById("atbat-mode-button");
 const resetButtonEl = document.getElementById("reset-button");
+const homeColorEl = document.getElementById("home-color");
+const awayColorEl = document.getElementById("away-color");
+const colorPickerEl = document.getElementById("color-picker");
 const statusEl = document.getElementById("status");
 let currentMode = "score";
+let activeColorTeam = "";
+
+const colorPalette = [
+  "#00FF00",
+  "#FF0000",
+  "#FFFFFF",
+  "#00B4FF",
+  "#FFFF00",
+  "#FF46A0",
+  "#FFBE00",
+  "#00F5A0",
+  "#7CFF00",
+  "#FF7A00",
+  "#7A5CFF",
+  "#00FFFF",
+  "#FF8CFF",
+  "#B8C4CC",
+  "#145CFF",
+  "#8CFFB8"
+];
 
 async function loadScore() {
   try {
@@ -83,6 +106,35 @@ async function resetCurrentView() {
   await changeScore(endpoint);
 }
 
+async function setTeamColor(team, color) {
+  setStatus("Updating color...");
+
+  const endpoint = team === "home" ? "/api/home/color" : "/api/away/color";
+  const body = new URLSearchParams({ color });
+
+  try {
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      body
+    });
+
+    if (!response.ok) {
+      throw new Error("Color update failed");
+    }
+
+    const data = await response.json();
+    updateScoreDisplay(data);
+    closeColorPicker();
+    setStatus("Color updated");
+  } catch (error) {
+    console.error(error);
+    setStatus("Color update failed");
+  }
+}
+
 async function saveTeamNames() {
   setStatus("Saving...");
 
@@ -123,6 +175,8 @@ function updateScoreDisplay(data) {
 
   updateTeamName(homeNameEl, data.homeName);
   updateTeamName(awayNameEl, data.awayName);
+  updateTeamColor(homeColorEl, data.homeColor);
+  updateTeamColor(awayColorEl, data.awayColor);
   updateModeDisplay(data.displayMode);
 }
 
@@ -138,6 +192,14 @@ function setStatus(message) {
   statusEl.textContent = message;
 }
 
+function updateTeamColor(swatchEl, color) {
+  if (!color) {
+    return;
+  }
+
+  swatchEl.style.backgroundColor = color;
+}
+
 function updateModeDisplay(mode) {
   const isAtBat = mode === "atBat";
   currentMode = isAtBat ? "atBat" : "score";
@@ -147,6 +209,40 @@ function updateModeDisplay(mode) {
   scoreModeButtonEl.classList.toggle("active", !isAtBat);
   atBatModeButtonEl.classList.toggle("active", isAtBat);
   resetButtonEl.textContent = isAtBat ? "Reset" : "Reset Score";
+
+  if (isAtBat) {
+    closeColorPicker();
+  }
+}
+
+function toggleColorPicker(team) {
+  if (activeColorTeam === team && colorPickerEl.classList.contains("active")) {
+    closeColorPicker();
+    return;
+  }
+
+  activeColorTeam = team;
+  renderColorPicker();
+  colorPickerEl.classList.add("active");
+}
+
+function closeColorPicker() {
+  activeColorTeam = "";
+  colorPickerEl.classList.remove("active");
+}
+
+function renderColorPicker() {
+  colorPickerEl.innerHTML = "";
+
+  colorPalette.forEach((color) => {
+    const button = document.createElement("button");
+    button.className = "palette-color";
+    button.type = "button";
+    button.style.backgroundColor = color;
+    button.setAttribute("aria-label", color);
+    button.addEventListener("click", () => setTeamColor(activeColorTeam, color));
+    colorPickerEl.appendChild(button);
+  });
 }
 
 homeNameEl.addEventListener("blur", saveTeamNames);

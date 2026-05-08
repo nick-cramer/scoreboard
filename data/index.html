@@ -22,7 +22,10 @@
 
     <section id="score-view" class="scoreboard view active">
       <div class="team-card">
-        <input id="home-name" class="team-name" type="text" maxlength="12" autocomplete="off" aria-label="Home team name" />
+        <div class="team-header">
+          <input id="home-name" class="team-name" type="text" maxlength="12" autocomplete="off" aria-label="Home team name" />
+          <button id="home-color" class="color-swatch" onclick="toggleColorPicker('home')" aria-label="Home display color"></button>
+        </div>
         <div id="home-score" class="score">0</div>
 
         <div class="button-row">
@@ -32,7 +35,10 @@
       </div>
 
       <div class="team-card">
-        <input id="away-name" class="team-name" type="text" maxlength="12" autocomplete="off" aria-label="Away team name" />
+        <div class="team-header">
+          <input id="away-name" class="team-name" type="text" maxlength="12" autocomplete="off" aria-label="Away team name" />
+          <button id="away-color" class="color-swatch" onclick="toggleColorPicker('away')" aria-label="Away display color"></button>
+        </div>
         <div id="away-score" class="score">0</div>
 
         <div class="button-row">
@@ -41,6 +47,8 @@
         </div>
       </div>
     </section>
+
+    <section id="color-picker" class="color-picker" aria-label="Display color picker"></section>
 
     <section id="atbat-view" class="atbat-grid view">
       <div class="stat-card">

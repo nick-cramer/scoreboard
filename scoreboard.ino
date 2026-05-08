@@ -36,6 +36,12 @@ int homeScore = 0;
 int awayScore = 0;
 String homeName = "HOM";
 String awayName = "AWY";
+uint8_t homeColorR = 0;
+uint8_t homeColorG = 255;
+uint8_t homeColorB = 0;
+uint8_t awayColorR = 255;
+uint8_t awayColorG = 0;
+uint8_t awayColorB = 0;
 int balls = 0;
 int strikes = 0;
 int outs = 0;
@@ -175,8 +181,8 @@ void drawScores() {
   display->clearScreen();
   display->setTextSize(1);
 
-  drawScoreRow(homeName, homeScore, 0, c(0, 255, 0));
-  drawScoreRow(awayName, awayScore, 8, c(255, 0, 0));
+  drawScoreRow(homeName, homeScore, 0, c(homeColorR, homeColorG, homeColorB));
+  drawScoreRow(awayName, awayScore, 8, c(awayColorR, awayColorG, awayColorB));
 }
 
 void drawCountDot(int x, int y, uint16_t color) {
@@ -270,6 +276,55 @@ bool serveFile(const String& path) {
 // ======================================================
 // API Helpers
 // ======================================================
+char hexDigit(uint8_t value) {
+  return value < 10 ? '0' + value : 'A' + (value - 10);
+}
+
+String colorToHex(uint8_t r, uint8_t g, uint8_t b) {
+  String hex = "";
+  hex += hexDigit(r >> 4);
+  hex += hexDigit(r & 0x0F);
+  hex += hexDigit(g >> 4);
+  hex += hexDigit(g & 0x0F);
+  hex += hexDigit(b >> 4);
+  hex += hexDigit(b & 0x0F);
+  return hex;
+}
+
+int hexValue(char ch) {
+  if (ch >= '0' && ch <= '9') return ch - '0';
+  if (ch >= 'A' && ch <= 'F') return ch - 'A' + 10;
+  if (ch >= 'a' && ch <= 'f') return ch - 'a' + 10;
+  return -1;
+}
+
+bool parseHexColor(String value, uint8_t& r, uint8_t& g, uint8_t& b) {
+  value.trim();
+
+  if (value.startsWith("#")) {
+    value = value.substring(1);
+  }
+
+  if (value.length() != 6) {
+    return false;
+  }
+
+  int digits[6];
+
+  for (int i = 0; i < 6; i++) {
+    digits[i] = hexValue(value.charAt(i));
+
+    if (digits[i] < 0) {
+      return false;
+    }
+  }
+
+  r = (digits[0] << 4) | digits[1];
+  g = (digits[2] << 4) | digits[3];
+  b = (digits[4] << 4) | digits[5];
+  return true;
+}
+
 void sendScoreJson() {
   String json = "{";
   json += "\"home\":";
@@ -288,6 +343,11 @@ void sendScoreJson() {
   json += String(outs);
   json += ",\"inning\":";
   json += String(inning);
+  json += ",\"homeColor\":\"#";
+  json += colorToHex(homeColorR, homeColorG, homeColorB);
+  json += "\",\"awayColor\":\"#";
+  json += colorToHex(awayColorR, awayColorG, awayColorB);
+  json += "\"";
   json += ",\"displayMode\":\"";
   json += (displayMode == MODE_AT_BAT ? "atBat" : "score");
   json += "\"";
@@ -328,6 +388,35 @@ void handleTeamNames() {
 
   if (server.hasArg("away")) {
     awayName = normalizeTeamName(server.arg("away"), awayName);
+  }
+
+  drawCurrentMode();
+  sendScoreJson();
+}
+
+void handleTeamColor(bool homeTeam) {
+  if (!server.hasArg("color")) {
+    server.send(400, "text/plain", "Missing color");
+    return;
+  }
+
+  uint8_t r = 0;
+  uint8_t g = 0;
+  uint8_t b = 0;
+
+  if (!parseHexColor(server.arg("color"), r, g, b)) {
+    server.send(400, "text/plain", "Invalid color");
+    return;
+  }
+
+  if (homeTeam) {
+    homeColorR = r;
+    homeColorG = g;
+    homeColorB = b;
+  } else {
+    awayColorR = r;
+    awayColorG = g;
+    awayColorB = b;
   }
 
   drawCurrentMode();
@@ -496,6 +585,14 @@ void setupServer() {
 
   server.on("/api/teams", HTTP_POST, []() {
     handleTeamNames();
+  });
+
+  server.on("/api/home/color", HTTP_POST, []() {
+    handleTeamColor(true);
+  });
+
+  server.on("/api/away/color", HTTP_POST, []() {
+    handleTeamColor(false);
   });
 
   server.on("/api/mode/score", HTTP_POST, []() {
