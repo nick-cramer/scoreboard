@@ -290,6 +290,14 @@ void handleReset() {
   sendScoreJson();
 }
 
+void handleAtBatReset() {
+  balls = 0;
+  strikes = 0;
+  outs = 0;
+  drawCurrentMode();
+  sendScoreJson();
+}
+
 void handleModeScore() {
   displayMode = MODE_SCORE;
   drawCurrentMode();
@@ -390,6 +398,10 @@ void setupServer() {
 
   server.on("/api/reset", HTTP_POST, []() {
     handleReset();
+  });
+
+  server.on("/api/atbat/reset", HTTP_POST, []() {
+    handleAtBatReset();
   });
 
   server.on("/api/teams", HTTP_POST, []() {

@@ -53,20 +53,20 @@
       </div>
 
       <div class="stat-card">
-        <h2>Strikes</h2>
-        <div id="strikes-value" class="stat-value">0</div>
-        <div class="button-row">
-          <button onclick="changeScore('/api/strikes/decrement')">-</button>
-          <button onclick="changeScore('/api/strikes/increment')">+</button>
-        </div>
-      </div>
-
-      <div class="stat-card">
         <h2>Outs</h2>
         <div id="outs-value" class="stat-value">0</div>
         <div class="button-row">
           <button onclick="changeScore('/api/outs/decrement')">-</button>
           <button onclick="changeScore('/api/outs/increment')">+</button>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <h2>Strikes</h2>
+        <div id="strikes-value" class="stat-value">0</div>
+        <div class="button-row">
+          <button onclick="changeScore('/api/strikes/decrement')">-</button>
+          <button onclick="changeScore('/api/strikes/increment')">+</button>
         </div>
       </div>
 
@@ -80,7 +80,7 @@
       </div>
     </section>
 
-    <button class="reset-button" onclick="changeScore('/api/reset')">
+    <button id="reset-button" class="reset-button" onclick="resetCurrentView()">
       Reset Score
     </button>
 

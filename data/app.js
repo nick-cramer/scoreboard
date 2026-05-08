@@ -10,7 +10,9 @@ const scoreViewEl = document.getElementById("score-view");
 const atBatViewEl = document.getElementById("atbat-view");
 const scoreModeButtonEl = document.getElementById("score-mode-button");
 const atBatModeButtonEl = document.getElementById("atbat-mode-button");
+const resetButtonEl = document.getElementById("reset-button");
 const statusEl = document.getElementById("status");
+let currentMode = "score";
 
 async function loadScore() {
   try {
@@ -73,6 +75,12 @@ async function setMode(mode) {
   }
 }
 
+async function resetCurrentView() {
+  const endpoint = currentMode === "atBat" ? "/api/atbat/reset" : "/api/reset";
+
+  await changeScore(endpoint);
+}
+
 async function saveTeamNames() {
   setStatus("Saving...");
 
@@ -130,11 +138,13 @@ function setStatus(message) {
 
 function updateModeDisplay(mode) {
   const isAtBat = mode === "atBat";
+  currentMode = isAtBat ? "atBat" : "score";
 
   scoreViewEl.classList.toggle("active", !isAtBat);
   atBatViewEl.classList.toggle("active", isAtBat);
   scoreModeButtonEl.classList.toggle("active", !isAtBat);
   atBatModeButtonEl.classList.toggle("active", isAtBat);
+  resetButtonEl.textContent = isAtBat ? "Reset" : "Reset Score";
 }
 
 homeNameEl.addEventListener("blur", saveTeamNames);
