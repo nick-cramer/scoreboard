@@ -47,6 +47,13 @@ enum DisplayMode {
 };
 
 DisplayMode displayMode = MODE_SCORE;
+bool webAppConnected = false;
+IPAddress connectedIp;
+int16_t scrollX = PANEL_RES_X;
+unsigned long lastScrollFrame = 0;
+
+const unsigned long SCROLL_FRAME_MS = 120;
+const unsigned long STARTUP_SPLASH_MIN_MS = 30000;
 
 // ======================================================
 // Color helper
@@ -72,6 +79,84 @@ void drawCenteredSmallText(const String& line1, const String& line2 = "") {
     display->setCursor(x2, 8);
     display->print(line2);
   }
+}
+
+void drawCenteredTextLine(const String& text, int y, uint16_t color) {
+  display->setTextColor(color);
+  int16_t x = max(1, (32 - (int)text.length() * 6) / 2);
+  display->setCursor(x, y);
+  display->print(text);
+}
+
+void drawScrollingTextLine(const String& text, int y, uint16_t color, int16_t x) {
+  display->setTextColor(color);
+  if (x == 0) {
+    x = -1;
+  }
+  display->setCursor(x, y);
+  display->print(text);
+}
+
+String ipUrl(IPAddress ip) {
+  String text = "http://";
+  text += String(ip[0]);
+  text += ".";
+  text += String(ip[1]);
+  text += ".";
+  text += String(ip[2]);
+  text += ".";
+  text += String(ip[3]);
+  return text;
+}
+
+bool advanceScroll(const String& text) {
+  unsigned long now = millis();
+
+  if (lastScrollFrame != 0 && now - lastScrollFrame < SCROLL_FRAME_MS) {
+    return false;
+  }
+
+  lastScrollFrame = now;
+  scrollX--;
+
+  if (scrollX == 0) {
+    scrollX = -1;
+  }
+
+  if (scrollX < -((int)text.length() * 6)) {
+    scrollX = PANEL_RES_X;
+  }
+
+  return true;
+}
+
+void drawWifiConnectingSplash() {
+  const String brand = "GameChanger";
+  unsigned long now = millis();
+
+  bool scrollChanged = advanceScroll(brand);
+
+  if (!scrollChanged) {
+    return;
+  }
+
+  display->clearScreen();
+  display->setTextSize(1);
+  drawScrollingTextLine(brand, 0, c(0, 255, 0), scrollX);
+  drawCenteredTextLine(((now / 1000) % 2 == 0) ? "SCORE" : "BOARD", 8, c(0, 180, 255));
+}
+
+void drawWaitingForWebApp() {
+  String url = ipUrl(connectedIp);
+
+  if (!advanceScroll(url)) {
+    return;
+  }
+
+  display->clearScreen();
+  display->setTextSize(1);
+  drawCenteredTextLine("Visit", 0, c(0, 255, 0));
+  drawScrollingTextLine(url, 8, c(0, 180, 255), scrollX);
 }
 
 void drawScoreRow(const String& teamName, int score, int y, uint16_t color) {
@@ -111,7 +196,7 @@ void drawAtBat() {
   display->clearScreen();
   display->setTextSize(1);
 
-  uint16_t ballsColor = c(0, 245, 160);
+  uint16_t ballsColor = c(255, 255, 255);
   uint16_t strikesColor = c(255, 190, 0);
   uint16_t outsColor = c(255, 70, 100);
   uint16_t inningColor = c(0, 180, 255);
@@ -139,22 +224,16 @@ void drawAtBat() {
 }
 
 void drawCurrentMode() {
+  if (!webAppConnected && WiFi.status() == WL_CONNECTED) {
+    drawWaitingForWebApp();
+    return;
+  }
+
   if (displayMode == MODE_AT_BAT) {
     drawAtBat();
   } else {
     drawScores();
   }
-}
-
-void showIpFeedback(IPAddress ip) {
-  // The full IP address is too wide for 32x16 pixels.
-  // So we briefly show each octet.
-  for (int i = 0; i < 4; i++) {
-    drawCenteredSmallText("IP", String(ip[i]));
-    delay(800);
-  }
-
-  drawCurrentMode();
 }
 
 // ======================================================
@@ -372,12 +451,23 @@ void handleInningDecrement() {
   sendScoreJson();
 }
 
+void handleWebAppConnect() {
+  webAppConnected = true;
+  displayMode = MODE_SCORE;
+  drawCurrentMode();
+  sendScoreJson();
+}
+
 // ======================================================
 // Setup Web Server Routes
 // ======================================================
 void setupServer() {
   server.on("/api/score", HTTP_GET, []() {
     sendScoreJson();
+  });
+
+  server.on("/api/connect", HTTP_POST, []() {
+    handleWebAppConnect();
   });
 
   server.on("/api/home/increment", HTTP_POST, []() {
@@ -466,30 +556,38 @@ void connectToWifi() {
   Serial.print("Connecting to Wi-Fi: ");
   Serial.println(WIFI_SSID);
 
-  drawCenteredSmallText("WIFI", "...");
-
   WiFi.mode(WIFI_STA);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  scrollX = PANEL_RES_X;
+  lastScrollFrame = 0;
 
-  int attempts = 0;
+  unsigned long splashStart = millis();
+  bool announcedConnected = false;
 
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
+  while (WiFi.status() != WL_CONNECTED || millis() - splashStart < STARTUP_SPLASH_MIN_MS) {
+    drawWifiConnectingSplash();
+    delay(50);
 
-    attempts++;
-
-    if (attempts % 4 == 0) {
-      drawCenteredSmallText("WIFI", String(attempts / 2) + "s");
+    if (WiFi.status() == WL_CONNECTED) {
+      if (!announcedConnected) {
+        Serial.println();
+        Serial.println("Wi-Fi connected. Holding startup splash.");
+        announcedConnected = true;
+      }
+    } else {
+      Serial.print(".");
     }
   }
 
-  Serial.println();
-  Serial.println("Wi-Fi connected.");
-  Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());
+  connectedIp = WiFi.localIP();
+  scrollX = PANEL_RES_X;
+  lastScrollFrame = 0;
 
-  showIpFeedback(WiFi.localIP());
+  Serial.println();
+  Serial.print("IP address: ");
+  Serial.println(connectedIp);
+
+  drawWaitingForWebApp();
 }
 
 // ======================================================
@@ -501,6 +599,7 @@ void setup() {
 
   display = new MatrixPanel_I2S_DMA(mxconfig);
   display->begin();
+  display->setTextWrap(false);
   display->setBrightness8(120);
   display->clearScreen();
 
@@ -516,11 +615,13 @@ void setup() {
 
   connectToWifi();
 
-  drawCurrentMode();
-
   setupServer();
 }
 
 void loop() {
   server.handleClient();
+
+  if (!webAppConnected && WiFi.status() == WL_CONNECTED) {
+    drawWaitingForWebApp();
+  }
 }

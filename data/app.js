@@ -16,7 +16,9 @@ let currentMode = "score";
 
 async function loadScore() {
   try {
-    const response = await fetch("/api/score");
+    const response = await fetch("/api/connect", {
+      method: "POST"
+    });
 
     if (!response.ok) {
       throw new Error("Failed to load score");
