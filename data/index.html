@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>GameChanger Scoreboard</title>
+
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <main class="app">
+    <header class="app-header">
+      <p class="brand-mark">GC</p>
+      <h1><span>GameChanger</span> Scoreboard</h1>
+    </header>
+
+    <nav class="mode-toggle" aria-label="Scoreboard view">
+      <button id="score-mode-button" class="mode-button active" onclick="setMode('score')">Score</button>
+      <button id="atbat-mode-button" class="mode-button" onclick="setMode('atBat')">At Bat</button>
+    </nav>
+
+    <section id="score-view" class="scoreboard view active">
+      <div class="team-card">
+        <input id="home-name" class="team-name" type="text" maxlength="12" autocomplete="off" aria-label="Home team name" />
+        <div id="home-score" class="score">0</div>
+
+        <div class="button-row">
+          <button onclick="changeScore('/api/home/decrement')">-</button>
+          <button onclick="changeScore('/api/home/increment')">+</button>
+        </div>
+      </div>
+
+      <div class="team-card">
+        <input id="away-name" class="team-name" type="text" maxlength="12" autocomplete="off" aria-label="Away team name" />
+        <div id="away-score" class="score">0</div>
+
+        <div class="button-row">
+          <button onclick="changeScore('/api/away/decrement')">-</button>
+          <button onclick="changeScore('/api/away/increment')">+</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="atbat-view" class="atbat-grid view">
+      <div class="stat-card">
+        <h2>Balls</h2>
+        <div id="balls-value" class="stat-value">0</div>
+        <div class="button-row">
+          <button onclick="changeScore('/api/balls/decrement')">-</button>
+          <button onclick="changeScore('/api/balls/increment')">+</button>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <h2>Strikes</h2>
+        <div id="strikes-value" class="stat-value">0</div>
+        <div class="button-row">
+          <button onclick="changeScore('/api/strikes/decrement')">-</button>
+          <button onclick="changeScore('/api/strikes/increment')">+</button>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <h2>Outs</h2>
+        <div id="outs-value" class="stat-value">0</div>
+        <div class="button-row">
+          <button onclick="changeScore('/api/outs/decrement')">-</button>
+          <button onclick="changeScore('/api/outs/increment')">+</button>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <h2>Inning</h2>
+        <div id="inning-value" class="stat-value">1</div>
+        <div class="button-row">
+          <button onclick="changeScore('/api/inning/decrement')">-</button>
+          <button onclick="changeScore('/api/inning/increment')">+</button>
+        </div>
+      </div>
+    </section>
+
+    <button class="reset-button" onclick="changeScore('/api/reset')">
+      Reset Score
+    </button>
+
+    <p id="status" class="status">Ready</p>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>

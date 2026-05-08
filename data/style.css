@@ -1,0 +1,226 @@
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  --navy-950: #021433;
+  --navy-900: #061b42;
+  --navy-850: #08245a;
+  --blue-600: #0967e8;
+  --blue-500: #1683ff;
+  --mint-400: #00f5a0;
+  --mint-500: #00e891;
+  --ink-soft: #9eb7d8;
+  --white: #f7fbff;
+  --danger: #ff4d67;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: Arial, Helvetica, sans-serif;
+  background:
+    radial-gradient(circle at 50% -12%, rgba(22, 131, 255, 0.38), transparent 36%),
+    linear-gradient(180deg, #061d49 0%, var(--navy-950) 58%, #000a1f 100%);
+  color: var(--white);
+}
+
+.app {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 16px 16px 26px;
+  text-align: center;
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.brand-mark {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin: 0;
+  border: 2px solid var(--blue-600);
+  border-radius: 12px;
+  background: linear-gradient(145deg, #073a95 0%, var(--navy-950) 70%);
+  box-shadow:
+    0 0 0 1px rgba(0, 245, 160, 0.14) inset,
+    0 10px 22px rgba(0, 0, 0, 0.34);
+  color: var(--mint-400);
+  font-size: 1.05rem;
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: 0;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(1.35rem, 6vw, 1.75rem);
+  line-height: 1;
+  letter-spacing: 0;
+  color: var(--white);
+  text-align: left;
+}
+
+h1 span {
+  color: var(--mint-400);
+}
+
+.mode-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 14px;
+  padding: 4px;
+  border: 1px solid rgba(22, 131, 255, 0.42);
+  border-radius: 8px;
+  background: rgba(0, 10, 31, 0.54);
+}
+
+.scoreboard {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.atbat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.view {
+  display: none;
+}
+
+.view.active {
+  display: grid;
+}
+
+.team-card,
+.stat-card {
+  background:
+    linear-gradient(180deg, rgba(8, 36, 90, 0.96), rgba(2, 20, 51, 0.98));
+  border: 1px solid rgba(22, 131, 255, 0.62);
+  border-radius: 8px;
+  padding: 12px 10px;
+  box-shadow:
+    0 0 0 1px rgba(0, 245, 160, 0.08) inset,
+    0 16px 28px rgba(0, 0, 0, 0.26);
+}
+
+.stat-card h2 {
+  margin: 0 0 8px;
+  color: var(--ink-soft);
+  font-size: 0.88rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+input {
+  width: 100%;
+  margin-bottom: 10px;
+  border: 1px solid rgba(22, 131, 255, 0.5);
+  border-radius: 8px;
+  padding: 8px 6px;
+  background: rgba(0, 10, 31, 0.78);
+  color: var(--mint-400);
+  font-size: 1.05rem;
+  font-weight: 800;
+  text-align: center;
+  text-transform: uppercase;
+  outline: none;
+}
+
+.team-name {
+  min-height: 38px;
+}
+
+input:focus {
+  border-color: var(--mint-400);
+  box-shadow: 0 0 0 3px rgba(0, 245, 160, 0.16);
+}
+
+.score {
+  font-size: 4rem;
+  font-weight: 900;
+  line-height: 1;
+  margin-bottom: 18px;
+  color: var(--white);
+  text-shadow: 0 0 18px rgba(0, 245, 160, 0.22);
+}
+
+.stat-value {
+  margin-bottom: 12px;
+  color: var(--white);
+  font-size: 3rem;
+  font-weight: 900;
+  line-height: 1;
+  text-shadow: 0 0 18px rgba(0, 245, 160, 0.22);
+}
+
+.button-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+button {
+  border: none;
+  border-radius: 8px;
+  padding: 18px;
+  font-size: 2rem;
+  font-weight: 900;
+  color: var(--navy-950);
+  background: linear-gradient(180deg, var(--mint-400), var(--mint-500));
+  box-shadow: 0 8px 18px rgba(0, 245, 160, 0.2);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+button:active {
+  transform: scale(0.97);
+  background: var(--mint-500);
+}
+
+.mode-button {
+  border-radius: 6px;
+  padding: 10px;
+  color: var(--ink-soft);
+  background: transparent;
+  box-shadow: none;
+  font-size: 0.9rem;
+}
+
+.mode-button.active {
+  color: var(--navy-950);
+  background: linear-gradient(180deg, var(--mint-400), var(--mint-500));
+}
+
+.reset-button {
+  width: 100%;
+  margin-top: 18px;
+  padding: 16px;
+  font-size: 1.2rem;
+  color: var(--white);
+  background: linear-gradient(180deg, var(--danger), #c31d3c);
+  box-shadow: 0 8px 18px rgba(255, 77, 103, 0.18);
+}
+
+.status {
+  margin-top: 16px;
+  min-height: 1.2em;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
