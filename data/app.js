@@ -6,16 +6,10 @@ const ballsValueEl = document.getElementById("balls-value");
 const strikesValueEl = document.getElementById("strikes-value");
 const outsValueEl = document.getElementById("outs-value");
 const inningValueEl = document.getElementById("inning-value");
-const scoreViewEl = document.getElementById("score-view");
-const atBatViewEl = document.getElementById("atbat-view");
-const scoreModeButtonEl = document.getElementById("score-mode-button");
-const atBatModeButtonEl = document.getElementById("atbat-mode-button");
-const resetButtonEl = document.getElementById("reset-button");
 const homeColorEl = document.getElementById("home-color");
 const awayColorEl = document.getElementById("away-color");
 const colorPickerEl = document.getElementById("color-picker");
 const statusEl = document.getElementById("status");
-let currentMode = "score";
 let activeColorTeam = "";
 
 const colorPalette = [
@@ -77,33 +71,12 @@ async function changeScore(endpoint) {
   }
 }
 
-async function setMode(mode) {
-  setStatus("Changing view...");
-
-  const endpoint = mode === "atBat" ? "/api/mode/atbat" : "/api/mode/score";
-
-  try {
-    const response = await fetch(endpoint, {
-      method: "POST"
-    });
-
-    if (!response.ok) {
-      throw new Error("Mode update failed");
-    }
-
-    const data = await response.json();
-    updateScoreDisplay(data);
-    setStatus("Mode changed");
-  } catch (error) {
-    console.error(error);
-    setStatus("Mode change failed");
-  }
+async function resetScore() {
+  await changeScore("/api/reset");
 }
 
-async function resetCurrentView() {
-  const endpoint = currentMode === "atBat" ? "/api/atbat/reset" : "/api/reset";
-
-  await changeScore(endpoint);
+async function resetCount() {
+  await changeScore("/api/atbat/reset");
 }
 
 async function setTeamColor(team, color) {
@@ -177,7 +150,6 @@ function updateScoreDisplay(data) {
   updateTeamName(awayNameEl, data.awayName);
   updateTeamColor(homeColorEl, data.homeColor);
   updateTeamColor(awayColorEl, data.awayColor);
-  updateModeDisplay(data.displayMode);
 }
 
 function updateTeamName(inputEl, value) {
@@ -198,21 +170,6 @@ function updateTeamColor(swatchEl, color) {
   }
 
   swatchEl.style.backgroundColor = color;
-}
-
-function updateModeDisplay(mode) {
-  const isAtBat = mode === "atBat";
-  currentMode = isAtBat ? "atBat" : "score";
-
-  scoreViewEl.classList.toggle("active", !isAtBat);
-  atBatViewEl.classList.toggle("active", isAtBat);
-  scoreModeButtonEl.classList.toggle("active", !isAtBat);
-  atBatModeButtonEl.classList.toggle("active", isAtBat);
-  resetButtonEl.textContent = isAtBat ? "Reset" : "Reset Score";
-
-  if (isAtBat) {
-    closeColorPicker();
-  }
 }
 
 function toggleColorPicker(team) {

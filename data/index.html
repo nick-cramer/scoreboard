@@ -15,12 +15,7 @@
       <h1><span>GameChanger</span> Scoreboard</h1>
     </header>
 
-    <nav class="mode-toggle" aria-label="Scoreboard view">
-      <button id="score-mode-button" class="mode-button active" onclick="setMode('score')">Score</button>
-      <button id="atbat-mode-button" class="mode-button" onclick="setMode('atBat')">At Bat</button>
-    </nav>
-
-    <section id="score-view" class="scoreboard view active">
+    <section id="score-view" class="scoreboard">
       <div class="team-card">
         <div class="team-header">
           <input id="home-name" class="team-name" type="text" maxlength="12" autocomplete="off" aria-label="Home team name" />
@@ -50,7 +45,7 @@
 
     <section id="color-picker" class="color-picker" aria-label="Display color picker"></section>
 
-    <section id="atbat-view" class="atbat-grid view">
+    <section id="atbat-view" class="atbat-grid">
       <div class="stat-card">
         <h2>Balls</h2>
         <div id="balls-value" class="stat-value">0</div>
@@ -88,9 +83,10 @@
       </div>
     </section>
 
-    <button id="reset-button" class="reset-button" onclick="resetCurrentView()">
-      Reset Score
-    </button>
+    <div class="reset-actions">
+      <button class="reset-button" onclick="resetScore()">Reset Score</button>
+      <button class="reset-button" onclick="resetCount()">Reset Count</button>
+    </div>
 
     <p id="status" class="status">Ready</p>
   </main>

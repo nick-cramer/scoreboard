@@ -14,7 +14,11 @@ const char* WIFI_PASSWORD = "rainier776";
 // ======================================================
 #define PANEL_RES_X 32
 #define PANEL_RES_Y 16
-#define PANEL_CHAIN 1
+#define PANEL_CHAIN 2
+
+const int16_t DISPLAY_WIDTH = PANEL_RES_X * PANEL_CHAIN;
+const int16_t SCORE_X = 0;
+const int16_t AT_BAT_X = PANEL_RES_X;
 
 HUB75_I2S_CFG mxconfig(
   PANEL_RES_X,
@@ -47,15 +51,9 @@ int strikes = 0;
 int outs = 0;
 int inning = 1;
 
-enum DisplayMode {
-  MODE_SCORE,
-  MODE_AT_BAT
-};
-
-DisplayMode displayMode = MODE_SCORE;
 bool webAppConnected = false;
 IPAddress connectedIp;
-int16_t scrollX = PANEL_RES_X;
+int16_t scrollX = DISPLAY_WIDTH;
 unsigned long lastScrollFrame = 0;
 
 const unsigned long SCROLL_FRAME_MS = 120;
@@ -76,12 +74,12 @@ void drawCenteredSmallText(const String& line1, const String& line2 = "") {
   display->setTextSize(1);
   display->setTextColor(c(0, 180, 255));
 
-  int16_t x1 = max(1, (32 - (int)line1.length() * 6) / 2);
+  int16_t x1 = max(1, (DISPLAY_WIDTH - (int)line1.length() * 6) / 2);
   display->setCursor(x1, 0);
   display->print(line1);
 
   if (line2.length() > 0) {
-    int16_t x2 = max(1, (32 - (int)line2.length() * 6) / 2);
+    int16_t x2 = max(1, (DISPLAY_WIDTH - (int)line2.length() * 6) / 2);
     display->setCursor(x2, 8);
     display->print(line2);
   }
@@ -89,7 +87,7 @@ void drawCenteredSmallText(const String& line1, const String& line2 = "") {
 
 void drawCenteredTextLine(const String& text, int y, uint16_t color) {
   display->setTextColor(color);
-  int16_t x = max(1, (32 - (int)text.length() * 6) / 2);
+  int16_t x = max(1, (DISPLAY_WIDTH - (int)text.length() * 6) / 2);
   display->setCursor(x, y);
   display->print(text);
 }
@@ -130,7 +128,7 @@ bool advanceScroll(const String& text) {
   }
 
   if (scrollX < -((int)text.length() * 6)) {
-    scrollX = PANEL_RES_X;
+    scrollX = DISPLAY_WIDTH;
   }
 
   return true;
@@ -165,24 +163,23 @@ void drawWaitingForWebApp() {
   drawScrollingTextLine(url, 8, c(0, 180, 255), scrollX);
 }
 
-void drawScoreRow(const String& teamName, int score, int y, uint16_t color) {
+void drawScoreRow(const String& teamName, int score, int y, uint16_t color, int16_t xOffset) {
   String name = teamName.substring(0, 3);
   String scoreText = String(score);
-  int16_t scoreX = max(19, 32 - (int)scoreText.length() * 6);
+  int16_t scoreX = xOffset + max(19, PANEL_RES_X - (int)scoreText.length() * 6);
 
   display->setTextColor(color);
-  display->setCursor(1, y);
+  display->setCursor(xOffset + 1, y);
   display->print(name);
   display->setCursor(scoreX, y);
   display->print(scoreText);
 }
 
-void drawScores() {
-  display->clearScreen();
+void drawScores(int16_t xOffset) {
   display->setTextSize(1);
 
-  drawScoreRow(homeName, homeScore, 0, c(homeColorR, homeColorG, homeColorB));
-  drawScoreRow(awayName, awayScore, 8, c(awayColorR, awayColorG, awayColorB));
+  drawScoreRow(homeName, homeScore, 0, c(homeColorR, homeColorG, homeColorB), xOffset);
+  drawScoreRow(awayName, awayScore, 8, c(awayColorR, awayColorG, awayColorB), xOffset);
 }
 
 void drawCountDot(int x, int y, uint16_t color) {
@@ -198,8 +195,7 @@ void drawDotGroup(int count, int x, int y, uint16_t color, int spacing = 4) {
   }
 }
 
-void drawAtBat() {
-  display->clearScreen();
+void drawAtBat(int16_t xOffset) {
   display->setTextSize(1);
 
   uint16_t ballsColor = c(255, 255, 255);
@@ -208,38 +204,36 @@ void drawAtBat() {
   uint16_t inningColor = c(0, 180, 255);
 
   display->setTextColor(ballsColor);
-  display->setCursor(1, 0);
+  display->setCursor(xOffset + 1, 0);
   display->print("B");
-  drawDotGroup(balls, 8, 3, ballsColor);
+  drawDotGroup(balls, xOffset + 8, 3, ballsColor);
 
   display->setTextColor(strikesColor);
-  display->setCursor(1, 8);
+  display->setCursor(xOffset + 1, 8);
   display->print("S");
-  drawDotGroup(strikes, 8, 11, strikesColor);
+  drawDotGroup(strikes, xOffset + 8, 11, strikesColor);
 
   display->setTextColor(outsColor);
-  display->setCursor(20, 0);
+  display->setCursor(xOffset + 20, 0);
   display->print("O");
-  drawDotGroup(outs, 27, 3, outsColor, 3);
+  drawDotGroup(outs, xOffset + 27, 3, outsColor, 3);
 
   String inningText = "I";
   inningText += String(inning);
   display->setTextColor(inningColor);
-  display->setCursor(20, 8);
+  display->setCursor(xOffset + 20, 8);
   display->print(inningText);
 }
 
-void drawCurrentMode() {
+void drawScoreboard() {
   if (!webAppConnected && WiFi.status() == WL_CONNECTED) {
     drawWaitingForWebApp();
     return;
   }
 
-  if (displayMode == MODE_AT_BAT) {
-    drawAtBat();
-  } else {
-    drawScores();
-  }
+  display->clearScreen();
+  drawScores(SCORE_X);
+  drawAtBat(AT_BAT_X);
 }
 
 // ======================================================
@@ -348,9 +342,6 @@ void sendScoreJson() {
   json += "\",\"awayColor\":\"#";
   json += colorToHex(awayColorR, awayColorG, awayColorB);
   json += "\"";
-  json += ",\"displayMode\":\"";
-  json += (displayMode == MODE_AT_BAT ? "atBat" : "score");
-  json += "\"";
   json += "}";
 
   server.send(200, "application/json", json);
@@ -390,7 +381,7 @@ void handleTeamNames() {
     awayName = normalizeTeamName(server.arg("away"), awayName);
   }
 
-  drawCurrentMode();
+  drawScoreboard();
   sendScoreJson();
 }
 
@@ -419,13 +410,13 @@ void handleTeamColor(bool homeTeam) {
     awayColorB = b;
   }
 
-  drawCurrentMode();
+  drawScoreboard();
   sendScoreJson();
 }
 
 void handleHomeIncrement() {
   homeScore++;
-  drawCurrentMode();
+  drawScoreboard();
   sendScoreJson();
 }
 
@@ -433,13 +424,13 @@ void handleHomeDecrement() {
   if (homeScore > 0) {
     homeScore--;
   }
-  drawCurrentMode();
+  drawScoreboard();
   sendScoreJson();
 }
 
 void handleAwayIncrement() {
   awayScore++;
-  drawCurrentMode();
+  drawScoreboard();
   sendScoreJson();
 }
 
@@ -447,14 +438,14 @@ void handleAwayDecrement() {
   if (awayScore > 0) {
     awayScore--;
   }
-  drawCurrentMode();
+  drawScoreboard();
   sendScoreJson();
 }
 
 void handleReset() {
   homeScore = 0;
   awayScore = 0;
-  drawCurrentMode();
+  drawScoreboard();
   sendScoreJson();
 }
 
@@ -462,19 +453,17 @@ void handleAtBatReset() {
   balls = 0;
   strikes = 0;
   outs = 0;
-  drawCurrentMode();
+  drawScoreboard();
   sendScoreJson();
 }
 
 void handleModeScore() {
-  displayMode = MODE_SCORE;
-  drawCurrentMode();
+  drawScoreboard();
   sendScoreJson();
 }
 
 void handleModeAtBat() {
-  displayMode = MODE_AT_BAT;
-  drawCurrentMode();
+  drawScoreboard();
   sendScoreJson();
 }
 
@@ -482,7 +471,7 @@ void handleBallsIncrement() {
   if (balls < 3) {
     balls++;
   }
-  drawCurrentMode();
+  drawScoreboard();
   sendScoreJson();
 }
 
@@ -490,7 +479,7 @@ void handleBallsDecrement() {
   if (balls > 0) {
     balls--;
   }
-  drawCurrentMode();
+  drawScoreboard();
   sendScoreJson();
 }
 
@@ -498,7 +487,7 @@ void handleStrikesIncrement() {
   if (strikes < 2) {
     strikes++;
   }
-  drawCurrentMode();
+  drawScoreboard();
   sendScoreJson();
 }
 
@@ -506,7 +495,7 @@ void handleStrikesDecrement() {
   if (strikes > 0) {
     strikes--;
   }
-  drawCurrentMode();
+  drawScoreboard();
   sendScoreJson();
 }
 
@@ -514,7 +503,7 @@ void handleOutsIncrement() {
   if (outs < 2) {
     outs++;
   }
-  drawCurrentMode();
+  drawScoreboard();
   sendScoreJson();
 }
 
@@ -522,13 +511,13 @@ void handleOutsDecrement() {
   if (outs > 0) {
     outs--;
   }
-  drawCurrentMode();
+  drawScoreboard();
   sendScoreJson();
 }
 
 void handleInningIncrement() {
   inning++;
-  drawCurrentMode();
+  drawScoreboard();
   sendScoreJson();
 }
 
@@ -536,14 +525,13 @@ void handleInningDecrement() {
   if (inning > 1) {
     inning--;
   }
-  drawCurrentMode();
+  drawScoreboard();
   sendScoreJson();
 }
 
 void handleWebAppConnect() {
   webAppConnected = true;
-  displayMode = MODE_SCORE;
-  drawCurrentMode();
+  drawScoreboard();
   sendScoreJson();
 }
 
@@ -655,7 +643,7 @@ void connectToWifi() {
 
   WiFi.mode(WIFI_STA);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-  scrollX = PANEL_RES_X;
+  scrollX = DISPLAY_WIDTH;
   lastScrollFrame = 0;
 
   unsigned long splashStart = millis();
@@ -677,7 +665,7 @@ void connectToWifi() {
   }
 
   connectedIp = WiFi.localIP();
-  scrollX = PANEL_RES_X;
+  scrollX = DISPLAY_WIDTH;
   lastScrollFrame = 0;
 
   Serial.println();

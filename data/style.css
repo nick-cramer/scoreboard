@@ -75,35 +75,18 @@ h1 span {
   color: var(--mint-400);
 }
 
-.mode-toggle {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
-  margin-bottom: 14px;
-  padding: 4px;
-  border: 1px solid rgba(22, 131, 255, 0.42);
-  border-radius: 8px;
-  background: rgba(0, 10, 31, 0.54);
-}
-
 .scoreboard {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
+  margin-bottom: 12px;
 }
 
 .atbat-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
-}
-
-.view {
-  display: none;
-}
-
-.view.active {
-  display: grid;
+  margin-top: 12px;
 }
 
 .team-card,
@@ -239,23 +222,15 @@ button:active {
   box-shadow: 0 8px 14px rgba(0, 0, 0, 0.22);
 }
 
-.mode-button {
-  border-radius: 6px;
-  padding: 10px;
-  color: var(--ink-soft);
-  background: transparent;
-  box-shadow: none;
-  font-size: 0.9rem;
-}
-
-.mode-button.active {
-  color: var(--navy-950);
-  background: linear-gradient(180deg, var(--mint-400), var(--mint-500));
+.reset-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 18px;
 }
 
 .reset-button {
   width: 100%;
-  margin-top: 18px;
   padding: 16px;
   font-size: 1.2rem;
   color: var(--white);
