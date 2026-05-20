@@ -19,6 +19,8 @@ const char* WIFI_PASSWORD = "rainier776";
 const int16_t DISPLAY_WIDTH = PANEL_RES_X * PANEL_CHAIN;
 const int16_t SCORE_X = 0;
 const int16_t AT_BAT_X = PANEL_RES_X;
+const int16_t AT_BAT_DISPLAY_X_OFFSET = 1;
+const int16_t OUTS_DISPLAY_X_OFFSET = -1;
 
 HUB75_I2S_CFG mxconfig(
   PANEL_RES_X,
@@ -40,16 +42,17 @@ int homeScore = 0;
 int awayScore = 0;
 String homeName = "HOM";
 String awayName = "AWY";
-uint8_t homeColorR = 0;
+uint8_t homeColorR = 255;
 uint8_t homeColorG = 255;
-uint8_t homeColorB = 0;
+uint8_t homeColorB = 255;
 uint8_t awayColorR = 255;
-uint8_t awayColorG = 0;
-uint8_t awayColorB = 0;
+uint8_t awayColorG = 255;
+uint8_t awayColorB = 255;
 int balls = 0;
 int strikes = 0;
 int outs = 0;
 int inning = 1;
+bool topInning = true;
 
 bool webAppConnected = false;
 IPAddress connectedIp;
@@ -195,34 +198,137 @@ void drawDotGroup(int count, int x, int y, uint16_t color, int spacing = 4) {
   }
 }
 
+uint8_t tinyGlyphColumn(char ch, int col) {
+  static const uint8_t digits[10][3] = {
+    { 0b11111, 0b10001, 0b11111 },
+    { 0b00000, 0b00000, 0b11111 },
+    { 0b11101, 0b10101, 0b10111 },
+    { 0b10101, 0b10101, 0b11111 },
+    { 0b00111, 0b00100, 0b11111 },
+    { 0b10111, 0b10101, 0b11101 },
+    { 0b11111, 0b10101, 0b11101 },
+    { 0b00001, 0b00001, 0b11111 },
+    { 0b11111, 0b10101, 0b11111 },
+    { 0b10111, 0b10101, 0b11111 }
+  };
+
+  if (ch >= '0' && ch <= '9') {
+    return digits[ch - '0'][col];
+  }
+
+  switch (ch) {
+    case 'o':
+    case 'O': {
+      const uint8_t glyph[3] = { 0b11111, 0b10001, 0b11111 };
+      return glyph[col];
+    }
+    case 'u':
+    case 'U': {
+      const uint8_t glyph[3] = { 0b11111, 0b10000, 0b11111 };
+      return glyph[col];
+    }
+    case 't':
+    case 'T': {
+      const uint8_t glyph[3] = { 0b00001, 0b11111, 0b00001 };
+      return glyph[col];
+    }
+    case 's':
+    case 'S': {
+      const uint8_t glyph[3] = { 0b10111, 0b10101, 0b11101 };
+      return glyph[col];
+    }
+    default:
+      return 0;
+  }
+}
+
+int tinyTextWidth(const String& text) {
+  int width = 0;
+
+  for (int i = 0; i < text.length(); i++) {
+    width += text.charAt(i) == ' ' ? 2 : 4;
+  }
+
+  return max(0, width - 1);
+}
+
+void drawTinyText(const String& text, int x, int y, uint16_t color) {
+  int cursorX = x;
+
+  for (int i = 0; i < text.length(); i++) {
+    char ch = text.charAt(i);
+
+    if (ch == ' ') {
+      cursorX += 2;
+      continue;
+    }
+
+    for (int col = 0; col < 3; col++) {
+      uint8_t column = tinyGlyphColumn(ch, col);
+
+      for (int row = 0; row < 5; row++) {
+        if (column & (1 << row)) {
+          display->drawPixel(cursorX + col, y + row, color);
+        }
+      }
+    }
+
+    cursorX += 4;
+  }
+}
+
+void drawInningArrow(int x, int y, bool pointingUp, uint16_t color) {
+  if (pointingUp) {
+    display->drawPixel(x + 2, y, color);
+    display->drawPixel(x + 1, y + 1, color);
+    display->drawPixel(x + 2, y + 1, color);
+    display->drawPixel(x + 3, y + 1, color);
+    display->drawFastHLine(x, y + 2, 5, color);
+    display->drawPixel(x + 2, y + 3, color);
+    display->drawPixel(x + 2, y + 4, color);
+  } else {
+    display->drawPixel(x + 2, y, color);
+    display->drawPixel(x + 2, y + 1, color);
+    display->drawFastHLine(x, y + 2, 5, color);
+    display->drawPixel(x + 1, y + 3, color);
+    display->drawPixel(x + 2, y + 3, color);
+    display->drawPixel(x + 3, y + 3, color);
+    display->drawPixel(x + 2, y + 4, color);
+  }
+}
+
 void drawAtBat(int16_t xOffset) {
+  xOffset += AT_BAT_DISPLAY_X_OFFSET;
   display->setTextSize(1);
 
-  uint16_t ballsColor = c(255, 255, 255);
-  uint16_t strikesColor = c(255, 190, 0);
-  uint16_t outsColor = c(255, 70, 100);
-  uint16_t inningColor = c(0, 180, 255);
+  uint16_t ballsColor = c(0, 255, 0);
+  uint16_t dashColor = c(255, 255, 255);
+  uint16_t strikesColor = c(255, 0, 0);
+  uint16_t outsColor = c(255, 0, 0);
+  uint16_t inningColor = c(255, 255, 255);
 
+  display->setCursor(xOffset + 0, 0);
   display->setTextColor(ballsColor);
-  display->setCursor(xOffset + 1, 0);
-  display->print("B");
-  drawDotGroup(balls, xOffset + 8, 3, ballsColor);
-
+  display->print(String(balls));
+  display->setTextColor(dashColor);
+  display->print("-");
   display->setTextColor(strikesColor);
-  display->setCursor(xOffset + 1, 8);
-  display->print("S");
-  drawDotGroup(strikes, xOffset + 8, 11, strikesColor);
+  display->print(String(strikes));
 
-  display->setTextColor(outsColor);
-  display->setCursor(xOffset + 20, 0);
-  display->print("O");
-  drawDotGroup(outs, xOffset + 27, 3, outsColor, 3);
-
-  String inningText = "I";
-  inningText += String(inning);
+  drawInningArrow(xOffset + 20, 1, topInning, inningColor);
   display->setTextColor(inningColor);
-  display->setCursor(xOffset + 20, 8);
-  display->print(inningText);
+
+  if (inning < 10) {
+    display->setCursor(xOffset + 26, 0);
+    display->print(String(inning));
+  } else {
+    drawTinyText(String(inning), xOffset + 25, 1, inningColor);
+  }
+
+  String outsText = String(outs);
+  outsText += " outs";
+  int16_t outsX = xOffset + max(0, (PANEL_RES_X - tinyTextWidth(outsText)) / 2) + OUTS_DISPLAY_X_OFFSET;
+  drawTinyText(outsText, outsX, 10, outsColor);
 }
 
 void drawScoreboard() {
@@ -337,6 +443,9 @@ void sendScoreJson() {
   json += String(outs);
   json += ",\"inning\":";
   json += String(inning);
+  json += ",\"inningHalf\":\"";
+  json += topInning ? "top" : "bottom";
+  json += "\"";
   json += ",\"homeColor\":\"#";
   json += colorToHex(homeColorR, homeColorG, homeColorB);
   json += "\",\"awayColor\":\"#";
@@ -529,6 +638,18 @@ void handleInningDecrement() {
   sendScoreJson();
 }
 
+void handleInningTop() {
+  topInning = true;
+  drawScoreboard();
+  sendScoreJson();
+}
+
+void handleInningBottom() {
+  topInning = false;
+  drawScoreboard();
+  sendScoreJson();
+}
+
 void handleWebAppConnect() {
   webAppConnected = true;
   drawScoreboard();
@@ -623,6 +744,14 @@ void setupServer() {
     handleInningDecrement();
   });
 
+  server.on("/api/inning/top", HTTP_POST, []() {
+    handleInningTop();
+  });
+
+  server.on("/api/inning/bottom", HTTP_POST, []() {
+    handleInningBottom();
+  });
+
   // Static files from LittleFS
   server.onNotFound([]() {
     if (!serveFile(server.uri())) {
@@ -682,6 +811,7 @@ void setup() {
   Serial.begin(115200);
   delay(500);
 
+  mxconfig.clkphase = false;
   display = new MatrixPanel_I2S_DMA(mxconfig);
   display->begin();
   display->setTextWrap(false);

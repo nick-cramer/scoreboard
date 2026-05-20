@@ -6,6 +6,8 @@ const ballsValueEl = document.getElementById("balls-value");
 const strikesValueEl = document.getElementById("strikes-value");
 const outsValueEl = document.getElementById("outs-value");
 const inningValueEl = document.getElementById("inning-value");
+const topInningEl = document.getElementById("top-inning");
+const bottomInningEl = document.getElementById("bottom-inning");
 const homeColorEl = document.getElementById("home-color");
 const awayColorEl = document.getElementById("away-color");
 const colorPickerEl = document.getElementById("color-picker");
@@ -145,6 +147,7 @@ function updateScoreDisplay(data) {
   strikesValueEl.textContent = data.strikes;
   outsValueEl.textContent = data.outs;
   inningValueEl.textContent = data.inning;
+  updateInningHalf(data.inningHalf);
 
   updateTeamName(homeNameEl, data.homeName);
   updateTeamName(awayNameEl, data.awayName);
@@ -158,6 +161,12 @@ function updateTeamName(inputEl, value) {
   }
 
   inputEl.value = value;
+}
+
+function updateInningHalf(value) {
+  const isBottom = value === "bottom";
+  topInningEl.classList.toggle("active", !isBottom);
+  bottomInningEl.classList.toggle("active", isBottom);
 }
 
 function setStatus(message) {

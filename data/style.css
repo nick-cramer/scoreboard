@@ -165,6 +165,13 @@ input:focus {
   gap: 10px;
 }
 
+.half-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: -2px 0 10px;
+}
+
 button {
   border: none;
   border-radius: 8px;
@@ -176,6 +183,21 @@ button {
   box-shadow: 0 8px 18px rgba(0, 245, 160, 0.2);
   cursor: pointer;
   touch-action: manipulation;
+}
+
+.half-button {
+  padding: 10px 8px;
+  border: 1px solid rgba(0, 245, 160, 0.42);
+  background: rgba(0, 10, 31, 0.78);
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+  box-shadow: none;
+}
+
+.half-button.active {
+  background: linear-gradient(180deg, var(--mint-400), var(--mint-500));
+  color: var(--navy-950);
+  box-shadow: 0 8px 18px rgba(0, 245, 160, 0.2);
 }
 
 button:active {

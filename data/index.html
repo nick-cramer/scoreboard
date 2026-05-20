@@ -56,15 +56,6 @@
       </div>
 
       <div class="stat-card">
-        <h2>Outs</h2>
-        <div id="outs-value" class="stat-value">0</div>
-        <div class="button-row">
-          <button onclick="changeScore('/api/outs/decrement')">-</button>
-          <button onclick="changeScore('/api/outs/increment')">+</button>
-        </div>
-      </div>
-
-      <div class="stat-card">
         <h2>Strikes</h2>
         <div id="strikes-value" class="stat-value">0</div>
         <div class="button-row">
@@ -74,8 +65,21 @@
       </div>
 
       <div class="stat-card">
+        <h2>Outs</h2>
+        <div id="outs-value" class="stat-value">0</div>
+        <div class="button-row">
+          <button onclick="changeScore('/api/outs/decrement')">-</button>
+          <button onclick="changeScore('/api/outs/increment')">+</button>
+        </div>
+      </div>
+
+      <div class="stat-card">
         <h2>Inning</h2>
         <div id="inning-value" class="stat-value">1</div>
+        <div class="half-row" aria-label="Inning half">
+          <button id="top-inning" class="half-button" onclick="changeScore('/api/inning/top')">Top</button>
+          <button id="bottom-inning" class="half-button" onclick="changeScore('/api/inning/bottom')">Bot</button>
+        </div>
         <div class="button-row">
           <button onclick="changeScore('/api/inning/decrement')">-</button>
           <button onclick="changeScore('/api/inning/increment')">+</button>
