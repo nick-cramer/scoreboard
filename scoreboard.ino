@@ -6,7 +6,7 @@
 // ======================================================
 // Wi-Fi Configuration
 // ======================================================
-const char* WIFI_SSID = "beast";
+const char* WIFI_SSID = "Nick’s iPhone";
 const char* WIFI_PASSWORD = "rainier776";
 
 // ======================================================
@@ -60,13 +60,80 @@ int16_t scrollX = DISPLAY_WIDTH;
 unsigned long lastScrollFrame = 0;
 
 const unsigned long SCROLL_FRAME_MS = 120;
-const unsigned long STARTUP_SPLASH_MIN_MS = 30000;
+const unsigned long STARTUP_SPLASH_MIN_MS = 10000;
 
 // ======================================================
 // Color helper
 // ======================================================
 uint16_t c(uint8_t r, uint8_t g, uint8_t b) {
   return display->color565(r, g, b);
+}
+
+String wifiEncryptionTypeName(wifi_auth_mode_t encryptionType) {
+  switch (encryptionType) {
+    case WIFI_AUTH_OPEN:
+      return "OPEN";
+    case WIFI_AUTH_WEP:
+      return "WEP";
+    case WIFI_AUTH_WPA_PSK:
+      return "WPA";
+    case WIFI_AUTH_WPA2_PSK:
+      return "WPA2";
+    case WIFI_AUTH_WPA_WPA2_PSK:
+      return "WPA/WPA2";
+    case WIFI_AUTH_WPA2_ENTERPRISE:
+      return "WPA2-ENTERPRISE";
+    #ifdef WIFI_AUTH_WPA3_PSK
+    case WIFI_AUTH_WPA3_PSK:
+      return "WPA3";
+    #endif
+    #ifdef WIFI_AUTH_WPA2_WPA3_PSK
+    case WIFI_AUTH_WPA2_WPA3_PSK:
+      return "WPA2/WPA3";
+    #endif
+    default:
+      return "UNKNOWN";
+  }
+}
+
+void scanWifiNetworks() {
+  Serial.println("Scanning for Wi-Fi networks...");
+
+  int networkCount = WiFi.scanNetworks();
+
+  if (networkCount == WIFI_SCAN_FAILED) {
+    Serial.println("Wi-Fi scan failed.");
+    return;
+  }
+
+  if (networkCount == 0) {
+    Serial.println("No Wi-Fi networks found.");
+    return;
+  }
+
+  Serial.print(networkCount);
+  Serial.println(" Wi-Fi network(s) found:");
+
+  for (int i = 0; i < networkCount; i++) {
+    Serial.print("  ");
+    Serial.print(i + 1);
+    Serial.print(": ");
+    Serial.print(WiFi.SSID(i));
+    Serial.print(" | RSSI ");
+    Serial.print(WiFi.RSSI(i));
+    Serial.print(" dBm | channel ");
+    Serial.print(WiFi.channel(i));
+    Serial.print(" | auth ");
+    Serial.print(wifiEncryptionTypeName(WiFi.encryptionType(i)));
+
+    if (WiFi.SSID(i) == WIFI_SSID) {
+      Serial.print(" <-- configured SSID");
+    }
+
+    Serial.println();
+  }
+
+  WiFi.scanDelete();
 }
 
 // ======================================================
@@ -771,6 +838,7 @@ void connectToWifi() {
   Serial.println(WIFI_SSID);
 
   WiFi.mode(WIFI_STA);
+  scanWifiNetworks();
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   scrollX = DISPLAY_WIDTH;
   lastScrollFrame = 0;
